@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // ===== CORS =====
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: ['https://castawaykeys.netlify.app', 'http://localhost:3000', '*'],
   credentials: true,
   maxAge: 86400
 }));
