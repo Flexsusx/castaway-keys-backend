@@ -7,33 +7,24 @@ const compression = require('compression');
 
 const app = express();
 
-// ===== ПРАВИЛЬНЫЙ CORS (РАЗРЕШАЕТ ВСЕ ЗАПРОСЫ) =====
-const allowedOrigins = [
-    'https://castawaykeys.netlify.app',
-    'https://castaway-keys-backend.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5000'
-];
-
+// ===== ПРАВИЛЬНЫЙ CORS (РАБОТАЕТ) =====
 app.use(cors({
     origin: function(origin, callback) {
-        // Разрешаем запросы без origin (например, от curl)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.log('❌ Блокировка CORS для:', origin);
-            callback(null, true); // Временно разрешаем все для отладки
-        }
+        // Разрешаем все запросы для отладки
+        callback(null, true);
     },
     credentials: true,
-    maxAge: 86400,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
 }));
 
 // Обработка preflight запросов
-app.options('*', cors());
+app.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+    res.sendStatus(200);
+});
 
 // ===== ОПТИМИЗАЦИЯ =====
 app.use(compression());
