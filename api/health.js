@@ -7,17 +7,20 @@ const compression = require('compression');
 
 const app = express();
 
+// ===== CORS (ПРАВИЛЬНАЯ НАСТРОЙКА) =====
+app.use(cors({
+  origin: ['https://castawaykeys.netlify.app', 'http://localhost:3000', 'http://localhost:5000'],
+  credentials: true,
+  maxAge: 86400,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+app.options('*', cors());
+
 // ===== ОПТИМИЗАЦИЯ =====
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
-
-// ===== CORS =====
-app.use(cors({
-  origin: ['https://castawaykeys.netlify.app', 'http://localhost:3000', '*'],
-  credentials: true,
-  maxAge: 86400
-}));
 
 // ===== ПОДКЛЮЧЕНИЕ К БАЗЕ =====
 const pool = new Pool({
@@ -93,7 +96,6 @@ initTables();
 
 // ===== МАРШРУТЫ =====
 
-// ✅ ИСПРАВЛЕННЫЙ МАРШРУТ /api/health
 app.get('/api/health', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
