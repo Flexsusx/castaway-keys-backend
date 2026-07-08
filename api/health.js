@@ -93,12 +93,23 @@ initTables();
 
 // ===== МАРШРУТЫ =====
 
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    db: pool.readyState === 1 ? 'connected' : 'disconnected'
-  });
+// ✅ ИСПРАВЛЕННЫЙ МАРШРУТ /api/health
+app.get('/api/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      db: 'connected'
+    });
+  } catch (err) {
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      db: 'disconnected',
+      error: err.message
+    });
+  }
 });
 
 // РЕГИСТРАЦИЯ
