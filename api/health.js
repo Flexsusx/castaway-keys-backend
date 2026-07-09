@@ -1,11 +1,15 @@
-const express = require('express');
-const { Pool } = require('pg');
+cconst express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const compression = require('compression');
-
 const app = express();
+
+// Разрешить запросы только с вашего домена на Netlify
+const corsOptions = {
+  origin: 'https://castawaykeys.netlify.app', // Укажите ваш URL
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+// или для разработки: app.use(cors());
 
 // ===== CORS (ПОЛНОСТЬЮ РАБОТАЕТ) =====
 app.use(cors({
