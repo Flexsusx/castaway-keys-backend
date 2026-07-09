@@ -7,31 +7,40 @@ const compression = require('compression');
 
 const app = express();
 
-// ===== CORS (ПРАВИЛЬНАЯ НАСТРОЙКА) =====
+// ===== CORS (ПОЛНОСТЬЮ РАБОТАЕТ) =====
+// Разрешаем все запросы
 app.use(cors({
-    origin: function(origin, callback) {
-        // Разрешаем все запросы для отладки
-        callback(null, true);
-    },
+    origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
 }));
 
-// Обработка preflight запросов
+// Явно обрабатываем OPTIONS запросы
 app.options('*', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
     res.sendStatus(200);
 });
 
-// ===== ОПТИМИЗАЦИЯ =====
+// Для всех маршрутов добавляем CORS заголовки
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 
-// ===== ПОДКЛЮЧЕНИЕ К БАЗЕ =====
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -40,7 +49,6 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
 });
 
-// ===== КЕШ КЛЮЧЕЙ =====
 let keysCache = {
   data: null,
   timestamp: 0,
@@ -58,7 +66,6 @@ async function getCachedKeys() {
   return keysCache.data;
 }
 
-// ===== ТАБЛИЦЫ =====
 let tablesInitialized = false;
 
 async function initTables() {
@@ -103,8 +110,6 @@ async function initTables() {
 }
 initTables();
 
-// ===== МАРШРУТЫ =====
-
 app.get('/api/health', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -123,7 +128,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// РЕГИСТРАЦИЯ
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -163,7 +167,6 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// ВХОД
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -202,7 +205,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// ПРОВЕРКА ТОКЕНА
 app.get('/api/auth/verify', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -232,7 +234,6 @@ app.get('/api/auth/verify', async (req, res) => {
   }
 });
 
-// ПРОФИЛЬ
 app.get('/api/auth/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
@@ -260,8 +261,6 @@ app.get('/api/auth/profile', async (req, res) => {
     res.status(500).json({ error: 'Ошибка получения профиля' });
   }
 });
-
-// ===== КЛЮЧИ =====
 
 app.get('/api/keys', async (req, res) => {
   try {
