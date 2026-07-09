@@ -7,7 +7,7 @@ const compression = require('compression');
 
 const app = express();
 
-// ===== ПРАВИЛЬНЫЙ CORS (РАБОТАЕТ) =====
+// ===== CORS (ПРАВИЛЬНАЯ НАСТРОЙКА) =====
 app.use(cors({
     origin: function(origin, callback) {
         // Разрешаем все запросы для отладки
